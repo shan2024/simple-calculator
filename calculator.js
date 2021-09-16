@@ -1,18 +1,19 @@
 let grid = document.querySelector(".container");
 let display = document.querySelector(".display");
 
-let firstOperand = 0;
-let secondOperand = 0;
+let firstOperand = "";
+let secondOperand = "";
 let operator = 'none';
 
 
 let operatorHit = false;
 let operandTwoPressed = false;
 let decimalPressed = false;
+let pressedEquals = false;
 
-let operations = ['C', 'Del', '+/-', '-', '1', '2', '3', '+', '4', '5', '6', '*',
-    '7', '8', '9', '/', '0', '.', '='];
-let classNames = ['C', 'Del', 'sign', 'minus', 'one', 'two', 'three', 'plus', 'four', 'five', 'six',
+let operations = ['C', 'Del', '+/-', '+', '1', '2', '3', '-', '4', '5', '6', '×',
+    '7', '8', '9', '÷', '0', '.', '='];
+let classNames = ['C', 'Del', 'sign', 'plus', 'one', 'two', 'three', 'minus', 'four', 'five', 'six',
     'mult', 'seven', 'eight', 'nine', 'div', 'zero', 'dec', 'equals'];
 
 operations.forEach(function (item, index, array) {
@@ -51,122 +52,117 @@ signButton.addEventListener("click", sign);
 
 let decButton = document.querySelector(".dec");
 decButton.addEventListener("click", decimal);
-//only show solution if = pressed or if we are on second operator
+
 function displayNum(num) {
-    //console.log(num);
-    if (num > 999999999 || num < -999999999) {
-        display.innerHTML = "Error: Max Size Exceeded";
+    if ( num != "." && !isFinite(num)) {
+        clear();
+        display.innerHTML = "Error: NaN"
+    }
+    else if (num > 999999999 || num < -999999999) {
+        clear();
+        display.innerHTML = "Error: Inf";
     }
     else {
-        display.innerHTML = num.toString().substring(0, 9);
+        display.innerHTML = num.toString().substring(0, 8);
     }
 
 }
 
 function saveOperand(e) {
+    let operand;
+    if ( pressedEquals) {
+        clear();
+        pressedEquals = false;
+    }
     if (!operatorHit) {
-        if (decimalPressed) {
-            firstOperand = parseFloat( firstOperand.toString() +"."+ e.target.innerHTML);
-            decimalPressed = false;
-        }
-        else {
-            firstOperand = parseFloat(firstOperand.toString() + e.target.innerHTML);
+        firstOperand = firstOperand + e.target.innerHTML;
 
-        }
-        console.log( e.target.innerHTML );
+        
 
-        firstOperand = parseFloat(firstOperand.toString().substring(0, 9));
-        console.log(firstOperand);
-        displayNum(firstOperand);
+        operand = firstOperand.toString().substring(0, 8);
     }
-    else {
-        if (decimalPressed) {
-            secondOperand = parseFloat( secondOperand.toString() +"."+ e.target.innerHTML);
-            decimalPressed = false;
-        }
-        else {
-            secondOperand = parseFloat(secondOperand.toString() + e.target.innerHTML);
-
-        }
-        secondOperand = parseFloat(secondOperand.toString().substring(0, 9));
+    else {      
+        secondOperand = secondOperand.toString() + e.target.innerHTML;   
+        operand = secondOperand.toString().substring(0, 8);
         operandTwoPressed = true;
-        displayNum(secondOperand);
     }
+    displayNum(operand);
 }
 
 function operatorPressed(e) {
-    operatorHit = true;
-    operator = e.target.innerHTML;
+    if (!operatorHit) {
+        operatorHit = true;
+        operator = e.target.innerHTML;
+        pressedEquals = false;
+    }
+    else if (operandTwoPressed && operatorHit) {
+        equalsPressed();
+        operatorHit = true;
+        operator = e.target.innerHTML;
+        pressedEquals = false;
+    }
+    
 
 }
 
-function equalsPressed(e) {
+function equalsPressed() {
     let num;
-    //console.log(operator);
     switch (operator) {
         case '+':
-            num = firstOperand + secondOperand;
+            num = parseFloat(firstOperand) + parseFloat(secondOperand);
             break;
         case '-':
-            num = firstOperand - secondOperand;
+            num = parseFloat(firstOperand) - parseFloat(secondOperand);
 
             break;
-        case '*':
-            num = firstOperand * secondOperand;
+        case '×':
+            num = parseFloat(firstOperand) * parseFloat(secondOperand);
 
             break;
-        case '/':
-            num = firstOperand / secondOperand;
+        case '÷':
+            num = parseFloat(firstOperand) / parseFloat(secondOperand);
+            
             break;
         default:
-            num = firstOperand;
+            num = parseFloat(firstOperand);
     }
-    //console.log(num);
-
+    if(num.toString().includes('e-')) {
+        num = "0";
+    }
     if (operandTwoPressed) {
-        console.log(num);
+        firstOperand = num.toString();
+        secondOperand = "";
         displayNum(num);
         operatorHit = false;
-        firstOperand = num;
-        secondOperand = 0;
         operandTwoPressed = false;
+        pressedEquals = true;
     }
 }
 
 function deleteNum() {
 
-    if (!operandTwoPressed) {
-        /*if (firstOperand % 1 !== 0) {
-            let factor = 1;
-            while ( firstOperand % 1 !== 0) {
-                factor *=10;
-                firstOperand*=10;
-                console.log("loop");
-            }
-            firstOperand = Math.floor(firstOperand/10) * factor /10;
+    if (display.innerHTML == 'Error: Inf' || display.innerHTML == 'Error: NaN') {
+    }
+    else if (!operandTwoPressed) {
+       
+        if (firstOperand.length == 1 || (firstOperand < 0 && firstOperand.length == 2) ||
+                (firstOperand.includes("0") && firstOperand.length == 2 && firstOperand.includes("-") )) {
+            firstOperand = "0";
         }
         else {
-            firstOperand =  Math.floor(firstOperand / 10);
-            displayNum(firstOperand);
-        }*/
-        if (firstOperand.toString().length == 1 || (firstOperand < 0 && firstOperand.toString().length == 2)) {
-            firstOperand = 0;
-        }
-        else {
-            firstOperand = parseFloat(display.innerHTML.slice(0, -1));
+            firstOperand = display.innerHTML.slice(0, -1);
         }
 
-        console.log(firstOperand);
         displayNum(firstOperand);
 
     }
     else {
-        //secondOperand =  Math.floor(secondOperand / 10); 
-        if (secondOperand.toString().length == 1 || (secondOperand < 0 && secondOperand.toString().length == 2)) {
-            secondOperand = 0;
+        if (secondOperand.length == 1 || (secondOperand < 0 && secondOperand.length == 2) ||
+                (secondOperand.includes("0") && secondOperand.length == 2 && secondOperand.includes("-") ) ) {
+            secondOperand = "0";
         }
         else {
-            secondOperand = parseFloat(display.innerHTML.toString().slice(0, -1));
+            secondOperand = display.innerHTML.toString().slice(0, -1);
         }
 
         displayNum(secondOperand);
@@ -175,36 +171,39 @@ function deleteNum() {
 }
 
 function clear() {
-    display.innerHTML  = 0;
-    firstOperand = 0;
-    secondOperand = 0;
+    display.innerHTML = 0;
+    firstOperand = '';
+    secondOperand = '';
     operator = 'none';
     operatorHit = false;
     operandTwoPressed = false;
     decimalPressed = false;
+    pressedEquals = false;
 
 }
 
 function sign() {
-    if(!operandTwoPressed) {
-        console.log("switch sign");
-        firstOperand = firstOperand * -1;
+    if(!operandTwoPressed && !isNaN(parseFloat(firstOperand))) {
+        firstOperand = (parseFloat(firstOperand) * -1).toString();
         displayNum(firstOperand);
     }
-    else {
-        secondOperand = secondOperand * -1;
+    else if (operandTwoPressed &&!isNaN(parseFloat(secondOperand))) {
+        secondOperand = (parseFloat(secondOperand) * -1).toString();
         displayNum(secondOperand);
     }
 
 }
 
 function decimal() {
-    if (operatorHit) {
-        display.innerHTML = ".";
-        decimalPressed = true;
-    }
-    else if (parseFloat(display.innerHTML) % 1 == 0) {
-        display.innerHTML = display.innerHTML + ".";
-        decimalPressed = true;
-    }
+        
+        if( !pressedEquals && ( (!operatorHit && !firstOperand.includes('.')) || firstOperand == '')) {
+            firstOperand = firstOperand + ".";
+            displayNum(firstOperand);
+        }
+        else if(operandTwoPressed && !secondOperand.includes('.')) {
+            secondOperand = secondOperand +".";
+            displayNum(secondOperand);
+        }
+    
 }
+
